@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 using UniRx;
+using Cysharp.Threading.Tasks;
 
 using MyEnum;
 
@@ -42,9 +43,7 @@ public class ChatReceivedView : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // スクロールビューの高さ調整
-        Vector2 offsetMin = _scrollRectTransform.offsetMin;
-        _scrollRectTransform.offsetMin = offsetMin;
+        
     }
 
     private void ReceivedMesssage(ChatMessage chatMessage)
@@ -69,9 +68,31 @@ public class ChatReceivedView : MonoBehaviour
 
         spawnObject.GetComponent<ChatView>().changeMessageText(chatMessage.Message);
 
+        RefreshLayout();
+    }
+
+    private async void RefreshLayout()
+    {
+        // スクロールビューの高さ調整
+        Vector2 offsetMin = _scrollRectTransform.offsetMin;
+        _scrollRectTransform.offsetMin = offsetMin;
+
         _layoutGroup.CalculateLayoutInputHorizontal();
         _layoutGroup.CalculateLayoutInputVertical();
         _layoutGroup.SetLayoutHorizontal();
         _layoutGroup.SetLayoutVertical();
+
+        await ScrollToBottom();
+    }
+    private async UniTask ScrollToBottom()
+    {
+        await UniTask.DelayFrame(10);
+        // スクロールを一番下まで移動
+        ScrollRect scrollRect = _scrollRectTransform.GetComponentInParent<ScrollRect>();
+        if (scrollRect != null)
+        {
+            Canvas.ForceUpdateCanvases(); // レイアウト更新を強制
+            scrollRect.verticalNormalizedPosition = 0f; // 一番下へ
+        }
     }
 }
